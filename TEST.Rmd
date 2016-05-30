@@ -1,0 +1,67 @@
+---
+title: "礦石判斷模型"
+output: github_document
+---
+
+## 資料前處理
+
+### 資料讀取
+此資料來源為UCI Machine Learning Repository。
+
+記載礦物與石頭接受各個不同角度的聲波撞擊後，接收到的回聲數值，一共有60個參數，代表使用一特別角度的聲波撞擊礦石所得回聲。另外，分類結果為二元分類，包括礦物 (M) 與石頭 (R) 。
+
+```{r message=F,warning=F}
+library(mlbench)
+data(Sonar) 
+str(Sonar) 
+```
+
+### 將資料隨機分為訓練組與測試組
+
+隨機將2/3的資料分到訓練組（Test==F），剩下1/3為測試組（Test==T）
+
+```{r}
+Sonar$Test<-F 
+Sonar[sample(1:nrow(Sonar),nrow(Sonar)/3),]$Test<-T 
+c(sum(Sonar$Test==F),sum(Sonar$Test==T)) 
+```
+
+可得訓練組案例數為`r sum(Sonar$Test==F)`，測試組案例數為`r sum(Sonar$Test==T)`
+
+## 預測模型建立
+
+### 模型建立
+   
+由於變數多，且多為連續變項，而輸出為二元類別變項，故選擇邏輯迴歸演算法建立模型，並使用雙向逐步選擇最佳參數組合。
+
+```{r warning=F,message=F}
+fit<-glm(Class~., Sonar[Sonar$Test==F,],family="binomial")
+library(MASS)
+finalFit<-stepAIC(fit,direction = "both",trace = F)
+summary(finalFit)$coefficients
+```
+
+### 模型說明
+
+由上述參數可知，使用聲波在不同角度撞擊`礦石`所得到的回聲資料，以邏輯迴歸建立模型預測礦石是否為礦物，經最佳化後，模型使用參數為`r rownames(summary(finalFit)$coefficient)[-1]`，共`r nrow(summary(finalFit)$coefficient)`個參數，各參數代表從一特別角度所得的礦石回聲
+ 
+## 預測模型驗證
+
+```{r warning=F,message=F,fig.height=4.5}
+MinePred<-predict(finalFit,newdata = Sonar[Sonar$Test==T,])
+MineAns<-ifelse(MinePred<0.5,"M","R") #<0.5: Level 1
+MineAns<-factor(MineAns,levels = c("M","R"))
+library(caret)
+sensitivity(MineAns,Sonar[Sonar$Test==T,]$Class)
+specificity(MineAns,Sonar[Sonar$Test==T,]$Class)
+posPredValue(MineAns,Sonar[Sonar$Test==T,]$Class)
+negPredValue(MineAns,Sonar[Sonar$Test==T,]$Class)
+```
+
+使用聲波在不同角度撞擊`礦石`所得到的回聲資料，以邏輯迴歸模型預測礦石是否為礦物，可得：
+
+- 敏感度 `r sensitivity(MineAns,Sonar[Sonar$Test==T,]$Class)*100`%
+- 特異性 `r specificity(MineAns,Sonar[Sonar$Test==T,]$Class)*100`%
+- 陽性預測率 `r posPredValue(MineAns,Sonar[Sonar$Test==T,]$Class)*100`%
+- 陰性預測率 `r negPredValue(MineAns,Sonar[Sonar$Test==T,]$Class)*100`%
+

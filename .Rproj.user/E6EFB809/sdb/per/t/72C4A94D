@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "---\ntitle: \"乳癌預測模型\"\noutput: github_document\n---\n\n## 資料前處理\n\n### 資料讀取\n此資料來源為UCI Machine Learning Repository。\n\n```{r message=F,warning=F}\nif (!require('mlbench')){\n    install.packages(\"mlbench\")\n}\n \n library(mlbench)\n data(BreastCancer)\n head(BreastCancer)\n \n BreastCancerC<-BreastCancer[complete.cases(BreastCancer),!names(BreastCancer)%in%c(\"Id\")]\n c(nrow(BreastCancer),nrow(BreastCancerC))\n```\n\n### 將資料隨機分為訓練組與測試組\n\n隨機將2/3的資料分到訓練組（Test==F），剩下1/3為測試組（Test==T）\n\n```{r}\n BreastCancerC$Test<-F\n BreastCancerC[sample(1:nrow(BreastCancerC),nrow(BreastCancerC)/3),]$Test<-T\n c(sum(BreastCancerC$Test==F),sum(BreastCancerC$Test==T))\n```\n\n可得訓練組案例數為`r sum(BreastCancerC$Test==F)`\n測試組案例數為`r sum(BreastCancerC$Test==T)`\n\n## 預測模型建立\n\n### 模型建立\n   \n由於變數較少，而輸出為二元類別變項，故選擇決策樹建立模型。\n\n```{r warning=F,message=F}\nif (!require('rpart')){\n    install.packages(\"rpart\")\n  library(rpart)\n}\nif(!require('rpart.plot')){\n install.packages(\"rpart.plot\");\n  library(rpart.plot)\n}\n \n fit<-rpart(Class~.,data=BreastCancerC[BreastCancerC$Test==F,])\n fit\n prp(fit)\n```\n### 模型說明\n\n由上述可大略推測參數數值大小與乳癌發生情況。\n\n\n## 預測模型驗證\n寫不出來QQ\n\n\n",
+    "created" : 1464619678415.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "501989489",
+    "id" : "72C4A94D",
+    "lastKnownWriteTime" : 1464625775,
+    "last_content_update" : 1464625775335,
+    "path" : "C:/Users/Lin/Desktop/Hw7/Hw7.Rmd",
+    "project_path" : "Hw7.Rmd",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

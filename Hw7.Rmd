@@ -1,0 +1,65 @@
+---
+title: "乳癌預測模型"
+output: github_document
+---
+
+## 資料前處理
+
+### 資料讀取
+此資料來源為UCI Machine Learning Repository。
+
+```{r message=F,warning=F}
+if (!require('mlbench')){
+    install.packages("mlbench")
+}
+ 
+ library(mlbench)
+ data(BreastCancer)
+ head(BreastCancer)
+ 
+ BreastCancerC<-BreastCancer[complete.cases(BreastCancer),!names(BreastCancer)%in%c("Id")]
+ c(nrow(BreastCancer),nrow(BreastCancerC))
+```
+
+### 將資料隨機分為訓練組與測試組
+
+隨機將2/3的資料分到訓練組（Test==F），剩下1/3為測試組（Test==T）
+
+```{r}
+ BreastCancerC$Test<-F
+ BreastCancerC[sample(1:nrow(BreastCancerC),nrow(BreastCancerC)/3),]$Test<-T
+ c(sum(BreastCancerC$Test==F),sum(BreastCancerC$Test==T))
+```
+
+可得訓練組案例數為`r sum(BreastCancerC$Test==F)`
+測試組案例數為`r sum(BreastCancerC$Test==T)`
+
+## 預測模型建立
+
+### 模型建立
+   
+由於變數較少，而輸出為二元類別變項，故選擇決策樹建立模型。
+
+```{r warning=F,message=F}
+if (!require('rpart')){
+    install.packages("rpart")
+  library(rpart)
+}
+if(!require('rpart.plot')){
+ install.packages("rpart.plot");
+  library(rpart.plot)
+}
+ 
+ fit<-rpart(Class~.,data=BreastCancerC[BreastCancerC$Test==F,])
+ fit
+ prp(fit)
+```
+### 模型說明
+
+由上述可大略推測參數數值大小與乳癌發生情況。
+
+
+## 預測模型驗證
+寫不出來QQ
+
+
